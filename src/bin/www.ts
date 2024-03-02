@@ -61,7 +61,7 @@ function normalizePort(val: string) {
  * Event listener for HTTP server "error" event.
  */
 
-function onError(error: { syscall: string; code: any }) {
+function onError(error: { syscall: string; code: unknown }) {
   if (error.syscall !== "listen") {
     throw error;
   }
@@ -95,3 +95,5 @@ function onListening() {
     .connect()
     .then(() => console.log("redisClient is running on default port 6379"));
 }
+
+export { redisClient };
