@@ -4,6 +4,7 @@
  */
 import app from "../app.js";
 import { createServer } from "http";
+import { createClient } from "redis";
 import debugMode from "debug";
 const debug = debugMode("yaan:server");
 /**
@@ -16,10 +17,15 @@ app.set("port", port);
  */
 const server = createServer(app);
 /**
+ * Create Redis server.
+ */
+const redisClient = createClient();
+/**
  * Listen on provided port, on all network interfaces.
  */
 server.listen(port);
 server.on("error", onError);
+redisClient.on("error", (err) => console.log("Redis Client Error", err));
 server.on("listening", onListening);
 /**
  * Normalize a port into a number, string, or false.
@@ -65,5 +71,8 @@ function onListening() {
     const addr = server.address();
     const bind = typeof addr === "string" ? "pipe " + addr : "port " + (addr === null || addr === void 0 ? void 0 : addr.port);
     debug("Listening on " + bind);
+    redisClient
+        .connect()
+        .then(() => console.log("redisClient is running on default port 6379"));
 }
 //# sourceMappingURL=www.js.map
