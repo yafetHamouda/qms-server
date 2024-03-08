@@ -51,6 +51,7 @@ router.post("/", async function (req, res) {
 /* Reset queue to 0 */
 router.delete("/", async function (req, res) {
   await redisClient.set("totalInQueue", 0);
+  await redisClient.set("currentInQueue", 0);
   await redisClient.set("firstWindow", 0);
   await redisClient.set("secondWindow", 0);
   await redisClient.set("thirdWindow", 0);
