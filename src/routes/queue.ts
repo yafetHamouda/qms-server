@@ -2,7 +2,7 @@ import { Router } from "express";
 import { redisClient } from "../bin/www.js";
 const router = Router();
 
-/* GET queue state. */
+/* GET next ticket to process */
 router.get("/", async function (req, res) {
   const { deviceId } = req.body;
   if (

@@ -3,7 +3,7 @@ import { redisClient } from "../bin/www.js";
 
 const router = Router();
 
-/* GET home page. */
+/* GET queue state. */
 router.get("/", async function (req, res) {
   const totalInQueue = await redisClient.get("totalInQueue");
   const currentInQueue = Number(await redisClient.get("currentInQueue")) || 0;
