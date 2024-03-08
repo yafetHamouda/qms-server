@@ -2,17 +2,45 @@ import { Router } from "express";
 import { redisClient } from "../bin/www.js";
 const router = Router();
 
-/* GET queue status. */
+/* GET queue state. */
 router.get("/", async function (req, res) {
-  const totalInQueue = await redisClient.get("totalInQueue");
+  const { deviceId } = req.body;
+  if (
+    !deviceId ||
+    typeof deviceId !== "number" ||
+    ![1, 2, 3].includes(deviceId)
+  ) {
+    throw new Error("device is invalid");
+  }
 
-  res.send(`Number of total tickets in queue is ${totalInQueue || 0}`);
+  const totalInQueue = Number(await redisClient.get("totalInQueue")) || 0;
+  const currentInQueue = Number(await redisClient.get("currentInQueue")) || 0;
+  const nextInQueue = currentInQueue + 1;
+
+  if (nextInQueue > totalInQueue) {
+    res.send("No available tickets in queue.");
+    return;
+  }
+
+  let assignedWindow = null;
+  if (deviceId === 1) {
+    assignedWindow = "first window";
+    await redisClient.set("firstWindow", nextInQueue);
+  } else if (deviceId === 2) {
+    assignedWindow = "second window";
+    await redisClient.set("secondWindow", nextInQueue);
+  } else if (deviceId === 3) {
+    assignedWindow = "third window";
+    await redisClient.set("thirdWindow", nextInQueue);
+  }
+  await redisClient.set("currentInQueue", nextInQueue);
+  res.send(`successfuly Assigned ticket to ${assignedWindow}`);
 });
 
-/* Post a new ticket to queue. */
+/* append a new ticket to queue. */
 router.post("/", async function (req, res) {
-  const currentQueueNumber = await redisClient.get("totalInQueue");
-  const nextQueueNumber = Number(currentQueueNumber || 0) + 1;
+  const currentTotalQueueNumber = await redisClient.get("totalInQueue");
+  const nextQueueNumber = Number(currentTotalQueueNumber || 0) + 1;
   await redisClient.set("totalInQueue", nextQueueNumber);
 
   res.send(
@@ -23,6 +51,9 @@ router.post("/", async function (req, res) {
 /* Reset queue to 0 */
 router.delete("/", async function (req, res) {
   await redisClient.set("totalInQueue", 0);
+  await redisClient.set("firstWindow", 0);
+  await redisClient.set("secondWindow", 0);
+  await redisClient.set("thirdWindow", 0);
 
   res.send("Queue was reset to 0");
 });

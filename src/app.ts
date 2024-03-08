@@ -50,3 +50,5 @@ app.use(function (err: Error, req: Request, res: Response) {
 });
 
 export default app;
+
+//TODO: add pm2 for server restaring when crashed
