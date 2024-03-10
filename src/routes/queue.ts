@@ -18,17 +18,21 @@ router.get("/", windowAuth, async function (req, res) {
 
   await redisClient.set(`window:${windowNumber}`, nextInQueue);
   await redisClient.set("currentInQueue", nextInQueue);
+
+  res.status(200);
   res.send(
     `successfuly Assigned ticket ${nextInQueue} to window ${windowNumber}`
   );
 });
 
 /* append a new ticket to queue. */
+//TODO: Add token security here
 router.post("/", async function (req, res) {
   const currentTotalQueueNumber = await redisClient.get("totalInQueue");
   const nextQueueNumber = Number(currentTotalQueueNumber || 0) + 1;
   await redisClient.set("totalInQueue", nextQueueNumber);
 
+  res.status(200);
   res.send(
     `Added a ticket to queue. Current queue number is ${nextQueueNumber}`
   );
@@ -37,6 +41,8 @@ router.post("/", async function (req, res) {
 /* Reset queue to 0 */
 router.delete("/", async function (req, res) {
   await redisClient.flushAll();
+
+  res.status(200);
   res.send("Queue was reset to 0");
 });
 

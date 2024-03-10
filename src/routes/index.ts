@@ -18,6 +18,7 @@ router.get("/", async function (req, res) {
   const totalInQueue = await redisClient.get("totalInQueue");
   const currentInQueue = await redisClient.get("currentInQueue");
 
+  res.status(200);
   res.send(
     `Number of total tickets in queue is ${
       totalInQueue || 0
