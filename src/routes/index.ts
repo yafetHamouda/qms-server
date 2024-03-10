@@ -8,10 +8,12 @@ router.get("/", async function (req, res) {
   const windowsKeys = await redisClient.keys("window:*");
   const windowsStatePromises = windowsKeys.map((w) => redisClient.get(w));
   const windowsState = await Promise.all(windowsStatePromises);
-  const windowsStateHTML = windowsKeys.map(
-    (e, index) =>
-      `<br> ${e.replace(":", " ")} is treating ticket ${windowsState[index]}`
-  );
+  const windowsStateHTML = windowsKeys
+    .map((e) => e.split(":")[1])
+    .sort((a, b) => Number(a) - Number(b))
+    .map(
+      (e, index) => `<br> window ${e} is treating ticket ${windowsState[index]}`
+    );
 
   const totalInQueue = await redisClient.get("totalInQueue");
   const currentInQueue = await redisClient.get("currentInQueue");
