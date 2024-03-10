@@ -1,3 +1,4 @@
+import dotenv from "dotenv";
 import createError from "http-errors";
 import express, {
   json,
@@ -9,15 +10,15 @@ import express, {
 import { join } from "path";
 import cookieParser from "cookie-parser";
 import logger from "morgan";
-
 import path from "path";
 import { fileURLToPath } from "url";
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
 import indexRouter from "./routes/index.js";
 import queueRouter from "./routes/queue.js";
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+dotenv.config();
 const app = express();
 
 // view engine setup
@@ -51,6 +52,6 @@ app.use(function (err: Error, req: Request, res: Response) {
 
 export default app;
 
-//TODO: number of windows should be dynamic 
+//TODO: number of windows should be dynamic
 //TODO: add pm2 for server restaring when crashed
 //TODO: add chrone job to automatically reset at mid-night

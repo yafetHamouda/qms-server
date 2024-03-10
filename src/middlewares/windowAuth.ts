@@ -6,10 +6,14 @@ export default function (req: Request, res: Response, next: NextFunction) {
     const token = req.headers.authorization?.split(" ")[1];
     const decoded = jwt.verify(
       token!,
-      "e54ccced-d125-4843-b0e4-56995a285a9f"
+      process.env.SECRET_JWT_KEY!
     ) as jwt.JwtPayload;
     const { establishmentId, windowNumber } = decoded;
-    //TODO: add establishmentId check here
+
+    if (process.env.ESTABLISHMENT_ID !== establishmentId) {
+      throw Error("Establishment is invalid.");
+    }
+
     res.locals.establishmentId = establishmentId;
     res.locals.windowNumber = windowNumber;
     next();
