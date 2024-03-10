@@ -16,19 +16,11 @@ router.get("/", windowAuth, async function (req, res) {
     return;
   }
 
-  let assignedWindow = null;
-  if (windowNumber === 1) {
-    assignedWindow = "first window";
-    await redisClient.set("firstWindow", nextInQueue);
-  } else if (windowNumber === 2) {
-    assignedWindow = "second window";
-    await redisClient.set("secondWindow", nextInQueue);
-  } else if (windowNumber === 3) {
-    assignedWindow = "third window";
-    await redisClient.set("thirdWindow", nextInQueue);
-  }
+  await redisClient.set(`window:${windowNumber}`, nextInQueue);
   await redisClient.set("currentInQueue", nextInQueue);
-  res.send(`successfuly Assigned ticket to ${assignedWindow}`);
+  res.send(
+    `successfuly Assigned ticket ${nextInQueue} to window ${windowNumber}`
+  );
 });
 
 /* append a new ticket to queue. */
@@ -44,12 +36,7 @@ router.post("/", async function (req, res) {
 
 /* Reset queue to 0 */
 router.delete("/", async function (req, res) {
-  await redisClient.set("totalInQueue", 0);
-  await redisClient.set("currentInQueue", 0);
-  await redisClient.set("firstWindow", 0);
-  await redisClient.set("secondWindow", 0);
-  await redisClient.set("thirdWindow", 0);
-
+  await redisClient.flushAll();
   res.send("Queue was reset to 0");
 });
 
