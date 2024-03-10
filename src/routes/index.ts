@@ -6,7 +6,7 @@ const router = Router();
 /* GET queue state. */
 router.get("/", async function (req, res) {
   const totalInQueue = await redisClient.get("totalInQueue");
-  const currentInQueue = Number(await redisClient.get("currentInQueue")) || 0;
+  const currentInQueue = await redisClient.get("currentInQueue");
   const firstWindow = await redisClient.get("firstWindow");
   const secondWindow = await redisClient.get("secondWindow");
   const thirdWindow = await redisClient.get("thirdWindow");

@@ -1,14 +1,15 @@
 import { Router } from "express";
 import { redisClient } from "../bin/www.js";
+import windowAuth from "../middlewares/windowAuth.js";
 const router = Router();
 
-/* GET next ticket to process */
-router.get("/", async function (req, res) {
-  const { deviceId } = req.body;
+/* GET next ticket in process */
+router.get("/", windowAuth, async function (req, res) {
+  const { windowNumber } = res.locals;
   if (
-    !deviceId ||
-    typeof deviceId !== "number" ||
-    ![1, 2, 3].includes(deviceId)
+    !windowNumber ||
+    typeof windowNumber !== "number" ||
+    ![1, 2, 3].includes(windowNumber)
   ) {
     throw new Error("device is invalid");
   }
@@ -23,13 +24,13 @@ router.get("/", async function (req, res) {
   }
 
   let assignedWindow = null;
-  if (deviceId === 1) {
+  if (windowNumber === 1) {
     assignedWindow = "first window";
     await redisClient.set("firstWindow", nextInQueue);
-  } else if (deviceId === 2) {
+  } else if (windowNumber === 2) {
     assignedWindow = "second window";
     await redisClient.set("secondWindow", nextInQueue);
-  } else if (deviceId === 3) {
+  } else if (windowNumber === 3) {
     assignedWindow = "third window";
     await redisClient.set("thirdWindow", nextInQueue);
   }
