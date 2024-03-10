@@ -8,7 +8,7 @@ import {
 const router = Router();
 
 router.get("/", windowAuth, processNextTicket);
-//TODO: Add token security here
+//TODO: Add token security for the below routes
 router.post("/", requestNewTicket);
 router.delete("/", resetQueue);
 

@@ -52,6 +52,5 @@ app.use(function (err: Error, req: Request, res: Response) {
 
 export default app;
 
-//TODO: number of windows should be dynamic
 //TODO: add pm2 for server restaring when crashed
 //TODO: add chrone job to automatically reset at mid-night
