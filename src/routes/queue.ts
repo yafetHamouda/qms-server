@@ -6,13 +6,6 @@ const router = Router();
 /* GET next ticket in process */
 router.get("/", windowAuth, async function (req, res) {
   const { windowNumber } = res.locals;
-  if (
-    !windowNumber ||
-    typeof windowNumber !== "number" ||
-    ![1, 2, 3].includes(windowNumber)
-  ) {
-    throw new Error("device is invalid");
-  }
 
   const totalInQueue = Number(await redisClient.get("totalInQueue")) || 0;
   const currentInQueue = Number(await redisClient.get("currentInQueue")) || 0;

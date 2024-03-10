@@ -14,6 +14,10 @@ export default function (req: Request, res: Response, next: NextFunction) {
       throw Error("Establishment is invalid.");
     }
 
+    if (!windowNumber || typeof windowNumber !== "number") {
+      throw new Error("window number is invalid");
+    }
+
     res.locals.establishmentId = establishmentId;
     res.locals.windowNumber = windowNumber;
     next();
