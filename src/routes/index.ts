@@ -1,30 +1,8 @@
 import { Router } from "express";
-import { redisClient } from "../bin/www.js";
+import { getQueueStatus } from "../controllers/QueueController.js";
 
 const router = Router();
 
-/* GET queue state. */
-router.get("/", async function (req, res) {
-  const windowsKeys = await redisClient.keys("window:*");
-  const windowsStatePromises = windowsKeys.map((w) => redisClient.get(w));
-  const windowsState = await Promise.all(windowsStatePromises);
-  const windowsStateHTML = windowsKeys
-    .map((e) => e.split(":")[1])
-    .sort((a, b) => Number(a) - Number(b))
-    .map(
-      (e, index) => `<br> window ${e} is treating ticket ${windowsState[index]}`
-    );
-
-  const totalInQueue = await redisClient.get("totalInQueue");
-  const currentInQueue = await redisClient.get("currentInQueue");
-
-  res.status(200);
-  res.send(
-    `Number of total tickets in queue is ${
-      totalInQueue || 0
-    } <br> Current treating ticket in queue ${currentInQueue || 0} <br>
-    ${windowsStateHTML}`
-  );
-});
+router.get("/", getQueueStatus);
 
 export default router;
