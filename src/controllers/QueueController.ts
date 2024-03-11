@@ -31,10 +31,13 @@ async function requestNewTicket(req: Request, res: Response) {
     const nextQueueNumber = Number(currentTotalQueueNumber || 0) + 1;
     await redisClient.set("totalInQueue", nextQueueNumber);
 
+    const currentInQueue = Number(await redisClient.get("currentInQueue")) || 0;
+
     // SAVE TO DB
     const ticket = new TicketRequest({
       ticketNumber: nextQueueNumber,
       clientName: "user",
+      currentProcessedTicketNumber: currentInQueue,
     });
     await ticket.save();
 
