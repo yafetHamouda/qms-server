@@ -10,4 +10,4 @@ const TicketRequestSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-export default mongoose.model("Ticket", TicketRequestSchema);
+export default mongoose.model("TicketRequest", TicketRequestSchema);
