@@ -7,6 +7,7 @@
 import app from "../app.js";
 import { createServer } from "http";
 import { createClient } from "redis";
+import mongoose from "mongoose";
 import debugMode from "debug";
 const debug = debugMode("yaan:server");
 
@@ -94,6 +95,10 @@ function onListening() {
   redisClient
     .connect()
     .then(() => console.log("redisClient is running on default port 6379"));
+  mongoose
+    .connect("mongodb://127.0.0.1:27017/QMS")
+    .then(() => console.log("mongoose is running on default port 27017"))
+    .catch((err) => console.log(err));
 }
 
 export { redisClient };

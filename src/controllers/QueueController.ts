@@ -1,5 +1,6 @@
 import { Response, Request } from "express";
 import { redisClient } from "../bin/www.js";
+import TicketRequest from "../models/TicketRequest.js";
 
 async function getQueueStatus(req: Request, res: Response) {
   const windowsKeys = await redisClient.keys("window:*");
@@ -25,14 +26,26 @@ async function getQueueStatus(req: Request, res: Response) {
 }
 
 async function requestNewTicket(req: Request, res: Response) {
-  const currentTotalQueueNumber = await redisClient.get("totalInQueue");
-  const nextQueueNumber = Number(currentTotalQueueNumber || 0) + 1;
-  await redisClient.set("totalInQueue", nextQueueNumber);
+  try {
+    const currentTotalQueueNumber = await redisClient.get("totalInQueue");
+    const nextQueueNumber = Number(currentTotalQueueNumber || 0) + 1;
+    await redisClient.set("totalInQueue", nextQueueNumber);
 
-  res.status(200);
-  res.send(
-    `Added a ticket to queue. Current queue number is ${nextQueueNumber}`
-  );
+    // SAVE TO DB
+    const ticket = new TicketRequest({
+      ticketNumber: nextQueueNumber,
+      clientName: "user",
+    });
+    await ticket.save();
+
+    res.status(200);
+    res.send(
+      `Added a ticket to queue. Current queue number is ${nextQueueNumber}`
+    );
+  } catch (error) {
+    res.status(400);
+    res.send(error);
+  }
 }
 
 async function processNextTicket(req: Request, res: Response) {
