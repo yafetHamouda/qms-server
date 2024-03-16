@@ -10,7 +10,6 @@ async function getQueueStatus(req: Request, res: Response) {
     const windowsStateHTML = queueState.map(
       (e) => `<br> window ${e.window} is treating ticket ${e.ticket}`
     );
-
     const totalInQueue = await redisClient.get("totalInQueue");
     const currentInQueue = await redisClient.get("currentInQueue");
 
@@ -29,14 +28,14 @@ async function getQueueStatus(req: Request, res: Response) {
 
 async function requestNewTicket(req: Request, res: Response) {
   try {
+    // Redis queue checks and logic
     const currentTotalQueueNumber = await redisClient.get("totalInQueue");
     const nextQueueNumber = Number(currentTotalQueueNumber || 0) + 1;
     await redisClient.set("totalInQueue", nextQueueNumber);
     const currentInQueue = Number(await redisClient.get("currentInQueue")) || 0;
 
-    const queueState = await generateQueueStatus();
-
     // SAVE TO DB
+    const queueState = await generateQueueStatus();
     const ticketRequest = new TicketRequest({
       ticketNumber: nextQueueNumber,
       clientName: "john doe",
@@ -45,6 +44,7 @@ async function requestNewTicket(req: Request, res: Response) {
     });
     await ticketRequest.save();
 
+    // Send back response to client
     res.status(200);
     res.send(
       `Added a ticket to queue. Current queue number is ${nextQueueNumber}`
@@ -59,21 +59,19 @@ async function processNextTicket(req: Request, res: Response) {
   try {
     const { windowNumber } = res.locals;
 
+    // Redis queue checks and logic
     const totalInQueue = Number(await redisClient.get("totalInQueue")) || 0;
     const currentInQueue = Number(await redisClient.get("currentInQueue")) || 0;
     const nextInQueue = currentInQueue + 1;
-
     if (nextInQueue > totalInQueue) {
       res.send("No available tickets in queue.");
       return;
     }
-
     await redisClient.set(`window:${windowNumber}`, nextInQueue);
     await redisClient.set("currentInQueue", nextInQueue);
 
+    // Save to DB
     const queueState = await generateQueueStatus();
-
-    // SAVE TO DB
     const ticketProcess = new TicketProcess({
       TicketNumberToProccess: nextInQueue,
       windowToProcess: windowNumber,
@@ -81,6 +79,7 @@ async function processNextTicket(req: Request, res: Response) {
     });
     await ticketProcess.save();
 
+    // Send back response to client
     res.status(200);
     res.send(
       `successfuly Assigned ticket ${nextInQueue} to window ${windowNumber}`
