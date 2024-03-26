@@ -103,7 +103,7 @@ function onListening() {
     .then(() => console.log("redisClient is running."))
     .catch((err) => console.log(err));
   mongoose
-    .connect("mongodb://127.0.0.1:27017/QMS")
+    .connect(process.env.MONGODB_CONNECTION_STRING!)
     .then(() => console.log("mongoose is running."))
     .catch((err) => console.log(err));
 }
