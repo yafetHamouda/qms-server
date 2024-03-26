@@ -27,7 +27,13 @@ const server = createServer(app);
  * Create Redis server.
  */
 
-const redisClient = createClient();
+const redisClient = createClient({
+  password: process.env.REDIS_PASSWORD,
+  socket: {
+    host: process.env.REDIS_HOST_URL,
+    port: Number(process.env.REDIS_PORT),
+  },
+});
 
 /**
  * Listen on provided port, on all network interfaces.
@@ -94,10 +100,11 @@ function onListening() {
   debug("Listening on " + bind);
   redisClient
     .connect()
-    .then(() => console.log("redisClient is running on default port 6379"));
+    .then(() => console.log("redisClient is running."))
+    .catch((err) => console.log(err));
   mongoose
     .connect("mongodb://127.0.0.1:27017/QMS")
-    .then(() => console.log("mongoose is running on default port 27017"))
+    .then(() => console.log("mongoose is running."))
     .catch((err) => console.log(err));
 }
 
