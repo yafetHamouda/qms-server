@@ -1,5 +1,21 @@
 import { redisClient } from "../bin/www.js";
 
+const getAllRedisStore: () => Promise<{
+  totalInQueue: number;
+  currentInQueue: number;
+}> = async () => {
+  const redisStore = await redisClient.mGet(["totalInQueue", "currentInQueue"]);
+
+  const [totalInQueue, currentInQueue] = redisStore;
+
+  const mapped = {
+    totalInQueue: Number(totalInQueue || 0),
+    currentInQueue: Number(currentInQueue || 0),
+  };
+
+  return mapped;
+};
+
 const generateQueueStatus = async () => {
   const windowsKeys = await redisClient.keys("window:*");
   const windowsState = await Promise.all(
@@ -19,4 +35,4 @@ const generateQueueStatus = async () => {
   return queueState;
 };
 
-export { generateQueueStatus };
+export { generateQueueStatus, getAllRedisStore };

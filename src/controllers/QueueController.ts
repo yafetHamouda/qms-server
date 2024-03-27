@@ -2,7 +2,7 @@ import { Response, Request } from "express";
 import { redisClient } from "../bin/www.js";
 import TicketRequest from "../models/TicketRequest.js";
 import TicketProcess from "../models/TicketProcess.js";
-import { generateQueueStatus } from "../utils/QueueHelper.js";
+import { generateQueueStatus, getAllRedisStore } from "../utils/QueueHelper.js";
 
 async function getQueueStatus(req: Request, res: Response) {
   try {
@@ -10,14 +10,11 @@ async function getQueueStatus(req: Request, res: Response) {
     const windowsStateHTML = queueState.map(
       (e) => `<br> window ${e.window} is treating ticket ${e.ticket}`
     );
-    const totalInQueue = await redisClient.get("totalInQueue");
-    const currentInQueue = await redisClient.get("currentInQueue");
+    const { currentInQueue, totalInQueue } = await getAllRedisStore();
 
     res.status(200);
     res.send(
-      `Number of total tickets in queue is ${
-        totalInQueue || 0
-      } <br> Current treating ticket in queue ${currentInQueue || 0} <br>
+      `Number of total tickets in queue is ${totalInQueue} <br> Current treating ticket in queue ${currentInQueue} <br>
         ${windowsStateHTML}`
     );
   } catch (error) {
@@ -29,13 +26,12 @@ async function getQueueStatus(req: Request, res: Response) {
 async function requestNewTicket(req: Request, res: Response) {
   try {
     // Redis queue checks and logic
-    const currentTotalQueueNumber = await redisClient.get("totalInQueue");
-    const nextQueueNumber = Number(currentTotalQueueNumber || 0) + 1;
+    const { currentInQueue, totalInQueue } = await getAllRedisStore();
+    const nextQueueNumber = totalInQueue + 1;
     await redisClient.set("totalInQueue", nextQueueNumber);
-    const currentInQueue = Number(await redisClient.get("currentInQueue")) || 0;
+    const queueState = await generateQueueStatus();
 
     // SAVE TO DB
-    const queueState = await generateQueueStatus();
     const ticketRequest = new TicketRequest({
       ticketNumber: nextQueueNumber,
       clientName: "john doe",
@@ -60,8 +56,7 @@ async function processNextTicket(req: Request, res: Response) {
     const { windowNumber } = res.locals;
 
     // Redis queue checks and logic
-    const totalInQueue = Number(await redisClient.get("totalInQueue")) || 0;
-    const currentInQueue = Number(await redisClient.get("currentInQueue")) || 0;
+    const { currentInQueue, totalInQueue } = await getAllRedisStore();
     const nextInQueue = currentInQueue + 1;
     if (nextInQueue > totalInQueue) {
       res.send("No available tickets in queue.");
@@ -94,6 +89,7 @@ async function resetQueue(req: Request, res: Response) {
   try {
     await redisClient.flushAll();
 
+    // Send back response to client
     res.status(200);
     res.send("Queue was reset to 0");
   } catch (error) {
