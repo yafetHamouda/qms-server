@@ -29,7 +29,13 @@ async function requestNewTicket(req: Request, res: Response) {
     const { currentInQueue, totalInQueue } = await getAllRedisStore();
     const nextQueueNumber = totalInQueue + 1;
     await redisClient.set("totalInQueue", nextQueueNumber);
-    const queueState = await generateQueueStatus();
+
+    const promisesResponse = await Promise.all([
+      generateQueueStatus(),
+      redisClient.set("totalInQueue", nextQueueNumber),
+    ]);
+
+    const [queueState] = promisesResponse;
 
     // SAVE TO DB
     const ticketRequest = new TicketRequest({
@@ -90,8 +96,10 @@ async function processNextTicket(req: Request, res: Response) {
       return;
     }
 
-    await redisClient.set(`window:${windowNumber}`, nextInQueue);
-    await redisClient.set("currentInQueue", nextInQueue);
+    await Promise.all([
+      redisClient.set(`window:${windowNumber}`, nextInQueue),
+      redisClient.set("currentInQueue", nextInQueue),
+    ]);
 
     // Save to DB
     const queueState = await generateQueueStatus();
