@@ -1,5 +1,5 @@
 import { Router } from "express";
-import windowAuth from "../middlewares/windowAuth.js";
+import authCheck from "../middlewares/authCheck.js";
 import {
   requestNewTicket,
   processNextTicket,
@@ -7,9 +7,8 @@ import {
 } from "../controllers/QueueController.js";
 const router = Router();
 
-router.get("/", windowAuth, processNextTicket);
-//TODO: Add token security for the below routes
-router.post("/", requestNewTicket);
-router.delete("/", resetQueue);
+router.get("/", authCheck, processNextTicket);
+router.post("/", authCheck, requestNewTicket);
+router.delete("/", authCheck, resetQueue);
 
 export default router;

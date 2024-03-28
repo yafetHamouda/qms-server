@@ -53,7 +53,11 @@ async function requestNewTicket(req: Request, res: Response) {
 
 async function processNextTicket(req: Request, res: Response) {
   try {
-    const { windowNumber } = res.locals;
+    const { windowNumber } = req.body;
+
+    if (!windowNumber || typeof windowNumber !== "number") {
+      throw new Error("window number is invalid");
+    }
 
     // Redis queue checks and logic
     const { currentInQueue, totalInQueue } = await getAllRedisStore();

@@ -8,18 +8,13 @@ export default function (req: Request, res: Response, next: NextFunction) {
       token!,
       process.env.SECRET_JWT_KEY!
     ) as jwt.JwtPayload;
-    const { establishmentId, windowNumber } = decoded;
+    const { establishmentId } = decoded;
 
     if (process.env.ESTABLISHMENT_ID !== establishmentId) {
       throw Error("Establishment is invalid.");
     }
 
-    if (!windowNumber || typeof windowNumber !== "number") {
-      throw new Error("window number is invalid");
-    }
-
     res.locals.establishmentId = establishmentId;
-    res.locals.windowNumber = windowNumber;
     next();
   } catch (err) {
     console.error(err);
