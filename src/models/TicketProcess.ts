@@ -8,6 +8,7 @@ const TicketProcessSchema = new mongoose.Schema(
       type: [{ window: Number, ticket: Number }],
       required: true,
     },
+    processDurationMS: Number,
   },
 
   { timestamps: true }

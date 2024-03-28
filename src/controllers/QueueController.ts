@@ -59,6 +59,29 @@ async function processNextTicket(req: Request, res: Response) {
       throw new Error("window number is invalid");
     }
 
+    // insert process duration for last ticket processed by the window making request
+    const previouslyProcessedTicketByWindow = await TicketProcess.findOne(
+      {
+        windowToProcess: windowNumber,
+      },
+      null,
+      { sort: { _id: -1 } }
+    ).exec();
+
+    if (
+      previouslyProcessedTicketByWindow &&
+      !previouslyProcessedTicketByWindow.processDurationMS
+    ) {
+      const processDurationMS =
+        new Date().getTime() -
+        previouslyProcessedTicketByWindow.createdAt.getTime();
+
+      await TicketProcess.findByIdAndUpdate(
+        previouslyProcessedTicketByWindow.id,
+        { $set: { processDurationMS } }
+      );
+    }
+
     // Redis queue checks and logic
     const { currentInQueue, totalInQueue } = await getAllRedisStore();
     const nextInQueue = currentInQueue + 1;
@@ -66,6 +89,7 @@ async function processNextTicket(req: Request, res: Response) {
       res.send("No available tickets in queue.");
       return;
     }
+
     await redisClient.set(`window:${windowNumber}`, nextInQueue);
     await redisClient.set("currentInQueue", nextInQueue);
 
