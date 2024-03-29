@@ -9,6 +9,7 @@ const TicketProcessSchema = new mongoose.Schema(
       required: true,
     },
     processDurationMS: Number,
+    closedAt: Date,
   },
 
   { timestamps: true }

@@ -28,7 +28,7 @@ export default async function (
 
       await TicketProcess.findByIdAndUpdate(
         previouslyProcessedTicketByWindow.id,
-        { $set: { processDurationMS } }
+        { $set: { processDurationMS, closedAt: new Date().toISOString() } }
       );
     }
 
