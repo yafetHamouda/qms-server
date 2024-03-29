@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "start:ts": "tsc -w",
-    "start:js": "nodemon ./dist/bin/www.js --delay 1",
+    "start:js": "nodemon ./dist/bin/www.js",
     "start": "concurrently npm:start:*"
   },
   "dependencies": {

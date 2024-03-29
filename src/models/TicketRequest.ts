@@ -1,4 +1,5 @@
-import mongoose from "mongoose";
+import mongoose, { CallbackError } from "mongoose";
+import TicketProcess from "../models/TicketProcess.js";
 
 const TicketRequestSchema = new mongoose.Schema(
   {
@@ -10,8 +11,28 @@ const TicketRequestSchema = new mongoose.Schema(
       type: [{ window: Number, ticket: Number }],
       required: true,
     },
+    avgDurationOnSave: Number,
   },
   { timestamps: true }
 );
+
+TicketRequestSchema.pre("save", async function (next) {
+  try {
+    const aggResult = await TicketProcess.aggregate([
+      {
+        $group: {
+          _id: null,
+          avgDuration: { $avg: "$processDurationMS" },
+        },
+      },
+    ]).exec();
+
+    this.avgDurationOnSave = Math.trunc(aggResult[0].avgDuration);
+
+    next();
+  } catch (error) {
+    next(error as CallbackError);
+  }
+});
 
 export default mongoose.model("TicketRequest", TicketRequestSchema);
