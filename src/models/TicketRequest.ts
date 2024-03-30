@@ -1,5 +1,6 @@
 import mongoose, { CallbackError } from "mongoose";
 import TicketProcess from "../models/TicketProcess.js";
+import { getAllRedisStore } from "../utils/QueueHelper.js";
 
 const TicketRequestSchema = new mongoose.Schema(
   {
@@ -11,13 +12,18 @@ const TicketRequestSchema = new mongoose.Schema(
       type: [{ window: Number, ticket: Number }],
       required: true,
     },
-    avgDurationOnSave: Number,
+    avgDurationOnSaveMS: Number,
+    EtaMS: Number,
+    EtaTime: Date,
   },
   { timestamps: true }
 );
 
 TicketRequestSchema.pre("save", async function (next) {
   try {
+    const { currentInQueue, totalInQueue } = await getAllRedisStore();
+    const remainingInQueue = totalInQueue - currentInQueue;
+
     const aggResult = await TicketProcess.aggregate([
       {
         $group: {
@@ -26,8 +32,12 @@ TicketRequestSchema.pre("save", async function (next) {
         },
       },
     ]).exec();
+    const avgDurationOnSaveMS = Math.trunc(aggResult[0].avgDuration);
+    const totalEtaDuration = remainingInQueue * avgDurationOnSaveMS;
 
-    this.avgDurationOnSave = Math.trunc(aggResult[0].avgDuration);
+    this.avgDurationOnSaveMS = avgDurationOnSaveMS;
+    this.EtaMS = totalEtaDuration;
+    this.EtaTime = new Date(new Date().getTime() + totalEtaDuration);
 
     next();
   } catch (error) {
