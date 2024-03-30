@@ -10,7 +10,7 @@ export default function (req: Request, res: Response, next: NextFunction) {
 
     next();
   } catch (err) {
-    console.error(err);
-    res.status(401).send("Unauthorized to perform this operation.");
+    res.status(401);
+    next(err);
   }
 }

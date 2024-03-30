@@ -34,7 +34,6 @@ export default async function (
 
     next();
   } catch (err) {
-    res.status(500);
-    res.send(err);
+    next(err);
   }
 }

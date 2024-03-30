@@ -1,10 +1,10 @@
-import { Response, Request } from "express";
+import { Response, Request, NextFunction } from "express";
 import { redisClient } from "../bin/www.js";
 import TicketRequest from "../models/TicketRequest.js";
 import TicketProcess from "../models/TicketProcess.js";
 import { generateQueueStatus, getAllRedisStore } from "../utils/QueueHelper.js";
 
-async function getQueueStatus(req: Request, res: Response) {
+async function getQueueStatus(req: Request, res: Response, next: NextFunction) {
   try {
     const queueState = await generateQueueStatus();
     const windowsStateHTML = queueState.map(
@@ -18,24 +18,20 @@ async function getQueueStatus(req: Request, res: Response) {
         ${windowsStateHTML}`
     );
   } catch (error) {
-    res.status(500);
-    res.send(error);
+    next(error);
   }
 }
 
-async function requestNewTicket(req: Request, res: Response) {
+async function requestNewTicket(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
   try {
     // Redis queue checks and logic
     const { currentInQueue, totalInQueue } = await getAllRedisStore();
+    const queueState = await generateQueueStatus();
     const nextQueueNumber = totalInQueue + 1;
-    await redisClient.set("totalInQueue", nextQueueNumber);
-
-    const promisesResponse = await Promise.all([
-      generateQueueStatus(),
-      redisClient.set("totalInQueue", nextQueueNumber),
-    ]);
-
-    const [queueState] = promisesResponse;
 
     // SAVE TO DB
     const ticketRequest = new TicketRequest({
@@ -44,7 +40,11 @@ async function requestNewTicket(req: Request, res: Response) {
       TicketNumberCurrentlyProcessed: currentInQueue,
       currentQueueState: queueState,
     });
-    await ticketRequest.save();
+
+    await Promise.all([
+      redisClient.set("totalInQueue", nextQueueNumber),
+      ticketRequest.save(),
+    ]);
 
     // Send back response to client
     res.status(200);
@@ -52,12 +52,15 @@ async function requestNewTicket(req: Request, res: Response) {
       `Added a ticket to queue. Current queue number is ${nextQueueNumber}`
     );
   } catch (error) {
-    res.status(400);
-    res.send(error);
+    next(error);
   }
 }
 
-async function processNextTicket(req: Request, res: Response) {
+async function processNextTicket(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
   try {
     const { windowNumber } = req.body;
 
@@ -89,12 +92,11 @@ async function processNextTicket(req: Request, res: Response) {
       `successfuly Assigned ticket ${nextInQueue} to window ${windowNumber}`
     );
   } catch (error) {
-    res.status(400);
-    res.send(error);
+    next(error);
   }
 }
 
-async function resetQueue(req: Request, res: Response) {
+async function resetQueue(req: Request, res: Response, next: NextFunction) {
   try {
     await redisClient.flushAll();
 
@@ -102,8 +104,7 @@ async function resetQueue(req: Request, res: Response) {
     res.status(200);
     res.send("Queue was reset to 0");
   } catch (error) {
-    res.status(500);
-    res.send(error);
+    next(error);
   }
 }
 
