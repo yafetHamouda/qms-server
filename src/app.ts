@@ -12,8 +12,10 @@ import cookieParser from "cookie-parser";
 import logger from "morgan";
 import path from "path";
 import { fileURLToPath } from "url";
+import cron from "node-cron";
 import indexRouter from "./routes/index.js";
 import queueRouter from "./routes/queue.js";
+import { redisClient } from "./bin/www.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -34,6 +36,12 @@ app.use(st(join(__dirname, "public")));
 app.use("/", indexRouter);
 app.use("/queue", queueRouter);
 
+// chrone job to automatically reset at mid-night
+cron.schedule("0 0 * * *", async () => {
+  await redisClient.flushAll();
+  console.log("successfully reset queue automatically at midnight");
+});
+
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
   next(createError(404));
@@ -53,4 +61,3 @@ app.use(function (err: Error, req: Request, res: Response) {
 export default app;
 
 //TODO: add pm2 for server restaring when crashed
-//TODO: add chrone job to automatically reset at mid-night
