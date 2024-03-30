@@ -32,6 +32,13 @@ TicketRequestSchema.pre("save", async function (next) {
         },
       },
     ]).exec();
+
+    // this check means that there is no logged ticket process duration yet so no need
+    // to populate ETAs values
+    if (aggResult.length === 0 || aggResult[0].avgDuration === null) {
+      return;
+    }
+
     const avgDurationOnSaveMS = Math.trunc(aggResult[0].avgDuration);
     const totalEtaDuration = remainingInQueue * avgDurationOnSaveMS;
 
