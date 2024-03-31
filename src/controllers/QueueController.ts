@@ -16,7 +16,7 @@ async function getQueueStatus(req: Request, res: Response, next: NextFunction) {
 
     res.status(200);
     if (format === "json") {
-      res.send({ queueState, currentInQueue, totalInQueue });
+      res.json({ queueState, currentInQueue, totalInQueue });
     } else {
       res.send(
         `Number of total tickets in queue is ${totalInQueue} <br> Current treating ticket in queue ${currentInQueue} <br>
