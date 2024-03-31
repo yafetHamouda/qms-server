@@ -6,17 +6,23 @@ import { generateQueueStatus, getAllRedisStore } from "../utils/QueueHelper.js";
 
 async function getQueueStatus(req: Request, res: Response, next: NextFunction) {
   try {
+    const { format } = req.query;
+
     const queueState = await generateQueueStatus();
+    const { currentInQueue, totalInQueue } = await getAllRedisStore();
     const windowsStateHTML = queueState.map(
       (e) => `<br> window ${e.window} is treating ticket ${e.ticket}`
     );
-    const { currentInQueue, totalInQueue } = await getAllRedisStore();
 
     res.status(200);
-    res.send(
-      `Number of total tickets in queue is ${totalInQueue} <br> Current treating ticket in queue ${currentInQueue} <br>
+    if (format === "json") {
+      res.send({ queueState, currentInQueue, totalInQueue });
+    } else {
+      res.send(
+        `Number of total tickets in queue is ${totalInQueue} <br> Current treating ticket in queue ${currentInQueue} <br>
         ${windowsStateHTML}`
-    );
+      );
+    }
   } catch (error) {
     next(error);
   }
