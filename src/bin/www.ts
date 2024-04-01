@@ -10,6 +10,8 @@ import { createClient } from "redis";
 import mongoose from "mongoose";
 import debugMode from "debug";
 const debug = debugMode("yaan:server");
+import { Server as socketServer } from "socket.io";
+import { ServerToClientEvents } from "../utils/types.js";
 
 /**
  * Get port from environment and store in Express.
@@ -22,6 +24,7 @@ app.set("port", port);
  */
 
 const server = createServer(app);
+const io = new socketServer<ServerToClientEvents>(server);
 
 /**
  * Create Redis server.
@@ -43,6 +46,9 @@ server.listen(port);
 server.on("error", onError);
 redisClient.on("error", (err) => console.log("Redis Client Error", err));
 server.on("listening", onListening);
+io.on("connection", () => {
+  console.log("Screen has connected");
+});
 
 /**
  * Normalize a port into a number, string, or false.
@@ -108,4 +114,4 @@ function onListening() {
     .catch((err) => console.log(err));
 }
 
-export { redisClient };
+export { redisClient, io };

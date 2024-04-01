@@ -1,10 +1,15 @@
 import { Response, Request, NextFunction } from "express";
-import { redisClient } from "../bin/www.js";
+import { redisClient, io } from "../bin/www.js";
 import TicketRequest from "../models/TicketRequest.js";
 import TicketProcess from "../models/TicketProcess.js";
 import { generateQueueStatus, getAllRedisStore } from "../utils/QueueHelper.js";
+import { QueueStateResponse } from "../utils/types.js";
 
-async function getQueueStatus(req: Request, res: Response, next: NextFunction) {
+async function getQueueStatus(
+  req: Request,
+  res: Response<QueueStateResponse | string>,
+  next: NextFunction
+) {
   try {
     const { format } = req.query;
 
@@ -16,7 +21,11 @@ async function getQueueStatus(req: Request, res: Response, next: NextFunction) {
 
     res.status(200);
     if (format === "json") {
-      res.json({ queueState, currentInQueue, totalInQueue });
+      res.send({
+        queueState,
+        currentInQueue,
+        totalInQueue,
+      });
     } else {
       res.send(
         `Number of total tickets in queue is ${totalInQueue} <br> Current treating ticket in queue ${currentInQueue} <br>
@@ -51,6 +60,12 @@ async function requestNewTicket(
       redisClient.set("totalInQueue", nextQueueNumber),
       ticketRequest.save(),
     ]);
+
+    io.emit("queueUpdated", {
+      totalInQueue: nextQueueNumber,
+      currentInQueue,
+      queueState,
+    });
 
     // Send back response to client
     res.status(200);
@@ -91,6 +106,12 @@ async function processNextTicket(
       currentQueueState: queueState,
     });
     await ticketProcess.save();
+
+    io.emit("queueUpdated", {
+      totalInQueue,
+      currentInQueue: nextInQueue,
+      queueState,
+    });
 
     // Send back response to client
     res.status(200);
