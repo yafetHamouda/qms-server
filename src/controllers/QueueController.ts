@@ -69,9 +69,12 @@ async function requestNewTicket(
 
     // Send back response to client
     res.status(200);
-    res.send(
-      `Added a ticket to queue. Current queue number is ${nextQueueNumber}`
-    );
+    res.send({
+      message: `Added a ticket to queue. Current queue number is ${nextQueueNumber}`,
+      data: {
+        nextQueueNumber,
+      },
+    });
   } catch (error) {
     next(error);
   }
