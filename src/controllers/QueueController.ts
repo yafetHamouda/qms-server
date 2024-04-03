@@ -3,7 +3,10 @@ import { redisClient, io } from "../bin/www.js";
 import TicketRequest from "../models/TicketRequest.js";
 import TicketProcess from "../models/TicketProcess.js";
 import { generateQueueStatus, getAllRedisStore } from "../utils/QueueHelper.js";
-import { QueueStateResponse } from "../utils/types.js";
+import {
+  QueueStateResponse,
+  RequestNewTicketResponse,
+} from "../utils/types.js";
 
 async function getQueueStatus(
   req: Request,
@@ -39,7 +42,7 @@ async function getQueueStatus(
 
 async function requestNewTicket(
   req: Request,
-  res: Response,
+  res: Response<RequestNewTicketResponse>,
   next: NextFunction
 ) {
   try {
@@ -56,10 +59,12 @@ async function requestNewTicket(
       currentQueueState: queueState,
     });
 
-    await Promise.all([
-      redisClient.set("totalInQueue", nextQueueNumber),
+    const [preTicketRequest] = await Promise.all([
       ticketRequest.save(),
+      redisClient.set("totalInQueue", nextQueueNumber),
     ]);
+
+    const { EtaMS, EtaTime } = preTicketRequest;
 
     io.emit("queueUpdated", {
       totalInQueue: nextQueueNumber,
@@ -73,6 +78,8 @@ async function requestNewTicket(
       message: `Added a ticket to queue. Current queue number is ${nextQueueNumber}`,
       data: {
         nextQueueNumber,
+        EtaMS: EtaMS || undefined,
+        EtaTime: EtaTime || undefined,
       },
     });
   } catch (error) {

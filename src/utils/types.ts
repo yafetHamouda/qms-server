@@ -4,6 +4,15 @@ export type QueueStateResponse = {
   queueState: { window: number; ticket: number }[];
 };
 
+export type RequestNewTicketResponse = {
+  message: string;
+  data: {
+    nextQueueNumber: number;
+    EtaMS?: number;
+    EtaTime?: Date;
+  };
+};
+
 export interface ServerToClientEvents {
   queueUpdated: (payload: QueueStateResponse) => void;
 }
