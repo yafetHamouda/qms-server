@@ -59,12 +59,12 @@ async function requestNewTicket(
       currentQueueState: queueState,
     });
 
-    const [preTicketRequest] = await Promise.all([
+    const [postTicketRequest] = await Promise.all([
       ticketRequest.save(),
       redisClient.set("totalInQueue", nextQueueNumber),
     ]);
 
-    const { EtaMS, EtaTime } = preTicketRequest;
+    const { EtaMS, EtaTime } = postTicketRequest;
 
     io.emit("queueUpdated", {
       totalInQueue: nextQueueNumber,
