@@ -1,6 +1,6 @@
 export const sendWhatsAppMessage = async () => {
   const rawResponse = await fetch(
-    "https://graph.facebook.com/v18.0/268550596344024/messages",
+    "https://graph.facebook.com/v18.0/263611196840658/messages",
     {
       method: "POST",
       headers: {
