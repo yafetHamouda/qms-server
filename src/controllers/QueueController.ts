@@ -3,6 +3,7 @@ import { redisClient, io } from "../bin/www.js";
 import TicketRequest from "../models/TicketRequest.js";
 import TicketProcess from "../models/TicketProcess.js";
 import { generateQueueStatus, getAllRedisStore } from "../utils/QueueHelper.js";
+import { checkPhoneNumber } from "../utils/checkNumber.js";
 import {
   QueueStateResponse,
   RequestNewTicketResponse,
@@ -46,6 +47,16 @@ async function requestNewTicket(
   next: NextFunction
 ) {
   try {
+    const { phoneNumber } = req.body;
+
+    if (
+      !!phoneNumber &&
+      (phoneNumber.length !== 8 || !checkPhoneNumber(phoneNumber))
+    ) {
+      res.status(400);
+      throw Error("Phone number is invalid");
+    }
+
     // Redis queue checks and logic
     const { currentInQueue, totalInQueue } = await getAllRedisStore();
     const queueState = await generateQueueStatus();
@@ -54,9 +65,9 @@ async function requestNewTicket(
     // SAVE TO DB
     const ticketRequest = new TicketRequest({
       ticketNumber: nextQueueNumber,
-      clientName: "john doe",
       TicketNumberCurrentlyProcessed: currentInQueue,
       currentQueueState: queueState,
+      clientPhoneNumber: phoneNumber,
     });
 
     const [postTicketRequest] = await Promise.all([

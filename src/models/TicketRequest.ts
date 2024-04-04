@@ -5,8 +5,7 @@ import { getAllRedisStore } from "../utils/QueueHelper.js";
 const TicketRequestSchema = new mongoose.Schema(
   {
     ticketNumber: { type: Number, required: true },
-    clientName: { type: String, minLength: 3, maxLength: 30, required: true },
-    clientPhoneNumber: { type: Number, min: 8, max: 8 },
+    clientPhoneNumber: { type: Number, minLength: 8, maxLength: 8 },
     TicketNumberCurrentlyProcessed: { type: Number, required: true },
     currentQueueState: {
       type: [{ window: Number, ticket: Number }],
