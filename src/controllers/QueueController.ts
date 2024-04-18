@@ -7,6 +7,7 @@ import { checkPhoneNumber } from "../utils/checkNumber.js";
 import {
   QueueStateResponse,
   RequestNewTicketResponse,
+  ProcessNextTicketResponse,
 } from "../utils/types.js";
 
 async function getQueueStatus(
@@ -100,7 +101,7 @@ async function requestNewTicket(
 
 async function processNextTicket(
   req: Request,
-  res: Response,
+  res: Response<ProcessNextTicketResponse | string>,
   next: NextFunction
 ) {
   try {
@@ -110,8 +111,7 @@ async function processNextTicket(
     const { currentInQueue, totalInQueue } = await getAllRedisStore();
     const nextInQueue = currentInQueue + 1;
     if (nextInQueue > totalInQueue) {
-      res.send("No available tickets in queue.");
-      return;
+      return res.send({ message: "No available tickets in queue." });
     }
 
     await Promise.all([
@@ -136,9 +136,10 @@ async function processNextTicket(
 
     // Send back response to client
     res.status(200);
-    res.send(
-      `successfuly Assigned ticket ${nextInQueue} to window ${windowNumber}`
-    );
+    res.send({
+      message: `successfuly Assigned ticket ${nextInQueue} to window ${windowNumber}`,
+      currentInQueue: nextInQueue,
+    });
   } catch (error) {
     next(error);
   }

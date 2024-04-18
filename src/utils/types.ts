@@ -4,6 +4,11 @@ export type QueueStateResponse = {
   queueState: { window: number; ticket: number }[];
 };
 
+export type ProcessNextTicketResponse = {
+  message: string;
+  currentInQueue?: number;
+};
+
 export type RequestNewTicketResponse = {
   message: string;
   data: {

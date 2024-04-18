@@ -9,8 +9,8 @@ import {
 } from "../controllers/QueueController.js";
 const router = Router();
 
-router.get(
-  "/",
+router.post(
+  "/next",
   authCheck,
   bodyDataCheck,
   storeProcessedTime,
