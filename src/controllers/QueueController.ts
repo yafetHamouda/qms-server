@@ -105,7 +105,11 @@ async function processNextTicket(
   next: NextFunction
 ) {
   try {
-    const { windowNumber } = req.body;
+    const { windowNumber, stop } = req.body;
+
+    if (stop) {
+      return res.send({ message: "You stopped processing tickets" });
+    }
 
     // Redis queue checks and logic
     const { currentInQueue, totalInQueue } = await getAllRedisStore();
