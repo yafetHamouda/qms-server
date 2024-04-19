@@ -107,7 +107,7 @@ async function processNextTicket(
   try {
     const { windowNumber, stop } = req.body;
 
-    if (stop) {
+    if (stop === true) {
       return res.send({ message: "You stopped processing tickets" });
     }
 
