@@ -149,6 +149,30 @@ async function processNextTicket(
   }
 }
 
+async function exitQueue(req: Request, res: Response, next: NextFunction) {
+  try {
+    const { windowNumber } = req.body;
+
+    await redisClient.del(`window:${windowNumber}`);
+    const promises = await Promise.all([
+      getAllRedisStore(),
+      generateQueueStatus(),
+    ]);
+
+    const [{ currentInQueue, totalInQueue }, queueState] = promises;
+
+    io.emit("queueUpdated", {
+      totalInQueue,
+      currentInQueue,
+      queueState,
+    });
+
+    res.status(200).send({});
+  } catch (error) {
+    next(error);
+  }
+}
+
 async function resetQueue(req: Request, res: Response, next: NextFunction) {
   try {
     await redisClient.flushAll();
@@ -161,4 +185,10 @@ async function resetQueue(req: Request, res: Response, next: NextFunction) {
   }
 }
 
-export { getQueueStatus, requestNewTicket, processNextTicket, resetQueue };
+export {
+  getQueueStatus,
+  requestNewTicket,
+  processNextTicket,
+  resetQueue,
+  exitQueue,
+};

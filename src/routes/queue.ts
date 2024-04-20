@@ -6,6 +6,7 @@ import {
   requestNewTicket,
   processNextTicket,
   resetQueue,
+  exitQueue,
 } from "../controllers/QueueController.js";
 const router = Router();
 
@@ -16,6 +17,7 @@ router.post(
   storeProcessedTime,
   processNextTicket
 );
+router.post("/exit", authCheck, bodyDataCheck, storeProcessedTime, exitQueue);
 router.post("/", authCheck, requestNewTicket);
 router.delete("/", authCheck, resetQueue);
 
