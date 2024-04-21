@@ -1,5 +1,5 @@
 import { Response, Request, NextFunction } from "express";
-import TicketProcess from "../models/TicketProcess.js";
+import Ticket from "../models/Ticket.js";
 
 const FORTY_FIVE_MINUTES_MS = 2700000;
 
@@ -12,9 +12,9 @@ export default async function (
     const { windowNumber } = req.body;
 
     // insert process duration for last ticket processed by the window making request
-    const previouslyProcessedTicketByWindow = await TicketProcess.findOne(
+    const previouslyProcessedTicketByWindow = await Ticket.findOne(
       {
-        windowToProcess: windowNumber,
+        processedByWindow: windowNumber,
       },
       null,
       { sort: { _id: -1 } }
@@ -22,8 +22,14 @@ export default async function (
 
     if (
       previouslyProcessedTicketByWindow &&
-      !previouslyProcessedTicketByWindow.processDurationMS
+      !previouslyProcessedTicketByWindow.processed
     ) {
+      await Ticket.findByIdAndUpdate(previouslyProcessedTicketByWindow.id, {
+        $set: {
+          processed: true,
+        },
+      });
+
       const processDurationMS =
         new Date().getTime() -
         previouslyProcessedTicketByWindow.createdAt.getTime();
@@ -34,10 +40,12 @@ export default async function (
         return next();
       }
 
-      await TicketProcess.findByIdAndUpdate(
-        previouslyProcessedTicketByWindow.id,
-        { $set: { processDurationMS, closedAt: new Date().toISOString() } }
-      );
+      await Ticket.findByIdAndUpdate(previouslyProcessedTicketByWindow.id, {
+        $set: {
+          processDurationMS,
+          closedAt: new Date().toISOString(),
+        },
+      });
     }
 
     next();

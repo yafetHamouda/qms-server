@@ -1,9 +1,7 @@
 import { Response, Request, NextFunction } from "express";
 import { redisClient, io } from "../bin/www.js";
-import TicketRequest from "../models/TicketRequest.js";
-import TicketProcess from "../models/TicketProcess.js";
+import Ticket from "../models/Ticket.js";
 import { generateQueueStatus, getAllRedisStore } from "../utils/QueueHelper.js";
-import { checkPhoneNumber } from "../utils/checkNumber.js";
 import {
   QueueStateResponse,
   RequestNewTicketResponse,
@@ -48,31 +46,21 @@ async function requestNewTicket(
   next: NextFunction
 ) {
   try {
-    const { phoneNumber } = req.body;
-
-    if (
-      !!phoneNumber &&
-      (phoneNumber.length !== 8 || !checkPhoneNumber(phoneNumber))
-    ) {
-      res.status(400);
-      throw Error("Phone number is invalid");
-    }
-
     // Redis queue checks and logic
     const { currentInQueue, totalInQueue } = await getAllRedisStore();
     const queueState = await generateQueueStatus();
     const nextQueueNumber = totalInQueue + 1;
 
     // SAVE TO DB
-    const ticketRequest = new TicketRequest({
+    const ticket = new Ticket({
+      // processed field value is set as false by default as per the Ticket schema definition
       ticketNumber: nextQueueNumber,
-      TicketNumberCurrentlyProcessed: currentInQueue,
-      currentQueueState: queueState,
-      clientPhoneNumber: phoneNumber,
+      TicketNumberProcessedWhenOpened: currentInQueue,
+      QueueStateWhenOpened: queueState,
     });
 
     const [postTicketRequest] = await Promise.all([
-      ticketRequest.save(),
+      ticket.save(),
       redisClient.set("totalInQueue", nextQueueNumber),
     ]);
 
@@ -125,12 +113,18 @@ async function processNextTicket(
 
     // Save to DB
     const queueState = await generateQueueStatus();
-    const ticketProcess = new TicketProcess({
-      TicketNumberToProccess: nextInQueue,
-      windowToProcess: windowNumber,
-      currentQueueState: queueState,
-    });
-    await ticketProcess.save();
+    const update = {
+      QueueStateWhenStartedProcessing: queueState,
+      processedByWindow: windowNumber,
+    };
+    await Ticket.findOneAndUpdate(
+      {
+        ticketNumber: nextInQueue,
+        processed: false,
+      },
+      update,
+      { sort: { _id: -1 } }
+    ).exec();
 
     io.emit("queueUpdated", {
       totalInQueue,
