@@ -1,0 +1,1 @@
+{"version":3,"file":"checkNumber.js","sourceRoot":"","sources":["../../src/utils/checkNumber.ts"],"names":[],"mappings":"AAAA,MAAM,CAAC,MAAM,gBAAgB,GAAG,CAAC,GAAW,EAAE,EAAE;IAC9C,MAAM,KAAK,GAAG,OAAO,CAAC,IAAI,CAAC,GAAG,CAAC,CAAC;IAChC,OAAO,KAAK,CAAC;AACf,CAAC,CAAC"}
